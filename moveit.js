@@ -10,8 +10,6 @@
     /* Position Data Members */
     var _startX = 0;
     var _startY = 0;
-    var _offsetX = 0;
-    var _offsetY = 0;
 
     /**
      * Move functionality
@@ -19,26 +17,29 @@
     $.fn.moveable = function (user_options) {
         /* Overwrites with user options */
         options = user_options;
+        options["elements"] = this;
 
-        /* Overwite start element */
-        var startElement = (options["startElement"] ? $(options["startElement"]) : this);
+        return this.each(function (index, element) {
 
-        options["self"] = this;
+            /* Overwite start element */
+            var startElement = (options["startElement"] ? $(this).find(options["startElement"]) : this);
 
-        /* Bind Mouse Events */
-        startElement.bind("mousedown", function (event) {
-            _mouseDown.call(this, event);
+            /* Bind Mouse Events */
+            startElement.bind("mousedown", function (event) {
+                _mouseDown.call(this, event);
+            });
+
+            $(element).bind("mousemove", function (event) {
+                _mouseMove.call(this, event);
+            });
+
+            $(element).bind("mouseup", function (event) {
+                _mouseUp.call(this, event);
+            });
+
+            $(element).attr("data-index", index);
+            startElement.attr("data-index", index);
         });
-
-        this.bind("mousemove", function (event) {
-            _mouseMove.call(this, event);
-        });
-
-        this.bind("mouseup", function (event) {
-            _mouseUp.call(this, event);
-        });
-
-        return this; // Chain. 
     };
 
     /**
@@ -48,18 +49,16 @@
      */
     function _mouseDown(event)
     {
-        /* Getting Current Numbers */
-        _offsetX = _getNumber(this.style.left);
-        _offsetY = _getNumber(this.style.top);
-
         _startX = event.clientX;
         _startY = event.clientY;
 
         /* Set Mouse Flag */
         mouse_down = true;
 
+        var element_index = parseInt($(this).attr("data-index"));
+
         /* Adding Class (By this, before pseudo element been added) */
-        $(options["self"]).addClass("popup-drag");
+        $(options["elements"][element_index]).addClass("popup-drag");
 
         /* Classing armageddon */
         event.preventDefault();
@@ -90,20 +89,12 @@
         $(this).removeClass("popup-drag");
         mouse_down = false;
 
-        /* Update Potiosion */
-        $(options["self"]).css("left", $(options["self"]).position().left);
-        $(options["self"]).css("top", $(options["self"]).position().top);
-        /* Remove Transform */
-        $(options["self"]).css("transform", "translate3d(0px, 0px, 0)");
-    }
+        var panel = options["elements"][parseInt($(this).attr("data-index"))];
 
-    /**
-     * Return number (int) of any value
-     * @param {number} value
-     * @return {int}
-     */
-    function _getNumber(value) {
-        var n = parseInt(value);
-        return n == null || isNaN(n) ? 0 : n;
+        /* Update Potiosion */
+        $(panel).css("left", $(panel).position().left);
+        $(panel).css("top", $(panel).position().top);
+        /* Remove Transform */
+        $(panel).css("transform", "translate3d(0px, 0px, 0)");
     }
 }(jQuery));
